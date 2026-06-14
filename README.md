@@ -67,8 +67,6 @@ PAD-2026/
 │   └── semana3_explore.md
 ├── notebooks/
 │   └── projeto_churn_agemc.ipynb
-├── src/
-│   └── .gitkeep
 ├── .gitignore
 ├── LICENSE
 ├── README.md
@@ -98,3 +96,60 @@ A análise exploratória inicial indicou que:
 - `phone number` é identificador e deve ser removido antes da modelagem.
 
 Esses pontos preparam a etapa de modelagem, onde será inserida a originalidade do projeto.
+
+## Como rodar o projeto
+
+Crie e ative o ambiente virtual:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Instale as dependências:
+
+```bash
+pip install -r requirements.txt
+```
+
+Abra o notebook:
+
+```bash
+jupyter notebook notebooks/projeto_churn_agemc.ipynb
+```
+
+Ou, se preferir JupyterLab:
+
+```bash
+jupyter lab
+```
+
+## O que deve ficar no GitHub
+
+Devem ser versionados:
+
+- documentos das semanas em `docs/`;
+- notebook principal em `notebooks/`;
+- dataset utilizado em `data/`;
+- `README.md`;
+- `requirements.txt`;
+- `.gitignore`;
+- `LICENSE`.
+
+Não devem ser versionados:
+
+- `.venv/`;
+- `.cache/`;
+- `.DS_Store`;
+- checkpoints de notebook;
+- arquivos temporários;
+- modelos treinados e artefatos pesados futuros, como `.pkl` e `.joblib`.
+
+A pasta `src/` poderá ser criada futuramente se o projeto passar a ter código reutilizável fora do notebook.
+
+## Próximos passos
+
+1. Definir a originalidade da etapa **M — Model the Data**.
+2. Implementar a modelagem no notebook.
+3. Comparar resultados com a abordagem de referência do Projeto FMF.
+4. Construir a etapa **C — Communicate**, destacando o processo de desenvolvimento e a contribuição original.
