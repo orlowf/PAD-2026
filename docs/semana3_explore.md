@@ -100,6 +100,53 @@ As maiores correlações lineares observadas com a variável `churn` foram:
 
 Essas correlações não devem ser interpretadas como causalidade, mas ajudam a indicar variáveis importantes para investigar e modelar.
 
+## Localização (estado) — teste da hipótese H4
+
+A hipótese **H4** afirma que a localização (`state`) tem pouco poder preditivo isoladamente. Como `state` é categórica com muitas categorias, a correlação linear usada acima não é adequada. Para avaliá-la, observamos a taxa de churn por estado, o tamanho da amostra em cada grupo e aplicamos o **teste qui-quadrado de independência**.
+
+### Taxa de churn por estado
+
+| | Estado | Clientes | Taxa de churn |
+|---|---|---:|---:|
+| Maior | NJ | 68 | 26,47% |
+| Maior | CA | 34 | 26,47% |
+| Maior | TX | 72 | 25,00% |
+| Maior | MD | 70 | 24,29% |
+| Maior | SC | 60 | 23,33% |
+| Menor | IA | 44 | 6,82% |
+| Menor | VA | 77 | 6,49% |
+| Menor | AZ | 64 | 6,25% |
+| Menor | AK | 52 | 5,77% |
+| Menor | HI | 53 | 5,66% |
+
+A taxa varia de cerca de 5,7% a 26,5% entre os extremos, contra uma média geral de 14,49%.
+
+### Tamanho da amostra por estado
+
+| Indicador | Valor |
+|---|---:|
+| Estados | 51 |
+| Mínimo de clientes por estado | 34 |
+| Mediana de clientes por estado | 65 |
+| Máximo de clientes por estado | 106 |
+| Média de churners por estado | 9,47 |
+
+Cada estado tem poucos registros (mediana de 65 clientes e cerca de 9 churners por estado). Isso torna a taxa de churn de qualquer estado isolado **instável**: uma diferença de poucos clientes muda bastante o percentual.
+
+### Teste qui-quadrado de independência
+
+| Indicador | Valor |
+|---|---:|
+| Qui-quadrado (χ²) | 83,04 |
+| Graus de liberdade | 50 |
+| p-valor | 0,0023 |
+| Cramér's V | 0,158 |
+| Células esperadas < 5 | 1 de 102 |
+
+O p-valor (0,0023) é menor que 0,05, então a distribuição de churn **varia de forma estatisticamente significativa** entre estados — não é apenas ruído. O teste é válido, pois apenas 1 das 102 células tem frequência esperada abaixo de 5. Porém, o tamanho do efeito é **pequeno** (Cramér's V ≈ 0,16).
+
+A leitura é que existe **algum** sinal associado à localização, mas ele é fraco e instável quando usado isoladamente, além de envolver alta cardinalidade (51 categorias) com risco de overfitting na modelagem.
+
 ## Colunas redundantes e pouco úteis
 
 As colunas de cobrança (`total day charge`, `total eve charge`, `total night charge`, `total intl charge`) são praticamente combinações diretas dos minutos correspondentes. Por exemplo:
@@ -132,7 +179,7 @@ Com base na exploração, as hipóteses iniciais ficam mais fortes:
 - **H1 confirmada como promissora:** clientes com muitas chamadas ao atendimento têm maior propensão ao churn.
 - **H2 confirmada como promissora:** clientes com maior uso diurno apresentam maior taxa de churn.
 - **H3 confirmada como promissora:** clientes com plano internacional apresentam churn bem acima da média.
-- **H4 parcialmente sustentada:** localização pode ter algum sinal, mas parece menos central do que uso, plano internacional e atendimento.
+- **H4 refinada (testada):** o teste qui-quadrado mostra que a localização tem associação estatisticamente significativa com o churn (p = 0,0023), mas o efeito é pequeno (Cramér's V ≈ 0,16) e a amostra por estado é reduzida. Logo, a localização não é puro ruído, porém é um preditor fraco e instável isoladamente — menos central do que uso, plano internacional e atendimento.
 
 ## Conclusão da etapa Explore
 

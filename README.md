@@ -92,6 +92,7 @@ A análise exploratória inicial indicou que:
 - clientes com plano internacional apresentam taxa de churn maior;
 - clientes com 4 ou mais chamadas ao atendimento têm aumento forte na taxa de churn;
 - clientes que cancelam usam, em média, mais minutos diurnos;
+- a localização (estado) tem associação estatisticamente significativa com o churn (qui-quadrado, p = 0,0023), mas com efeito pequeno (Cramér's V ≈ 0,16) e amostra reduzida por estado, sendo um preditor fraco e instável isoladamente;
 - colunas de cobrança são quase perfeitamente correlacionadas com as colunas de minutos e podem ser redundantes na modelagem;
 - `phone number` é identificador e deve ser removido antes da modelagem.
 
