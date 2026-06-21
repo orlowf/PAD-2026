@@ -54,7 +54,8 @@ Notas metodológicas:
 - a **correlação ponto-bisserial** mede o tamanho de efeito entre a variável binária `churn`
   e variáveis numéricas;
 - **Cramér's V** mede a força da associação em tabelas de contingência (0 = nenhuma);
-- **H4** é apenas **confirmatório** aqui (a análise detalhada do estado está na etapa E).
+- **H4** é apenas **confirmatório** aqui — no treino (n menor) o χ² cai para 74,04 e o p sobe para ≈ 0,015 (ante 0,0023 da base completa na etapa E), mas a conclusão de **sinal fraco** se mantém; a análise detalhada do estado está na etapa E;
+- mesmo sob **correção para múltiplos testes** (Holm/Bonferroni, 5 testes), **H1–H3 seguem significativas** (p ≪ 0,01); apenas **H4** é o caso-limite.
 
 **Leitura:** H1, H2 e H3 são fortemente significativas. O maior efeito é o das **chamadas
 ao atendimento ≥ 4** (V ≈ 0,33), seguido do **plano internacional** (V ≈ 0,26). H4 (estado)
@@ -83,22 +84,24 @@ A seleção **deriva diretamente dos testes de M.1** (calculados no treino):
   `total day minutes`, `number vmail messages`, `total eve minutes`, `total intl calls`,
   `total intl minutes` (6 de 11 candidatas); **descartadas** as sem sinal (`total day calls`,
   `total night minutes`, `account length`, `total eve calls`, `total night calls`);
-- `international plan`, `voice mail plan` e **`area code`** (nominal) com *one-hot*
-  (`OneHotEncoder(handle_unknown="ignore")` dentro do `ColumnTransformer`, ajustado no treino);
+- **`area code`** foi **descartado**: no ranking de M.1 tem efeito ≈ 0 e p > 0,05, então cai
+  pelo mesmo critério das numéricas sem sinal (antes era mantido sem justificativa);
+- `international plan` e `voice mail plan` com *one-hot* `drop="if_binary"` (uma coluna 0/1 cada,
+  sem a dummy redundante) dentro do `ColumnTransformer`, ajustado no treino;
 - **`state`:** comparado **manter vs. dropar** por validação cruzada (RF de referência, k=5):
 
   | Conjunto | F1 | PR-AUC |
   |---|---:|---:|
-  | completo (sem state) | 0,780 ± 0,029 | 0,853 ± 0,043 |
-  | enxuto (sem state) | 0,774 ± 0,046 | 0,836 ± 0,051 |
-  | enxuto + state | 0,755 ± 0,063 | 0,838 ± 0,050 |
+  | completo (sem state) | 0,747 ± 0,034 | 0,850 ± 0,044 |
+  | enxuto (sem state) | 0,772 ± 0,046 | 0,845 ± 0,046 |
+  | enxuto + state | 0,720 ± 0,055 | 0,828 ± 0,054 |
 
   A seleção **enxuta** não é pior que a completa além da variabilidade da CV (mantida, por
   parcimônia); os *dummies* de `state` **não melhoram o F1** (na verdade pioram) com ganho
   desprezível de PR-AUC, então **`state` é DROPADO** — coerente com o sinal fraco de H4.
 
-Dimensão final de `X` (encoding ajustado no treino): **13 colunas** (6 numéricas + 7 *dummies*
-de `international plan`, `voice mail plan` e `area code`), aplicadas a 2.499 linhas de treino.
+Dimensão final de `X` (encoding ajustado no treino): **8 colunas** (6 numéricas + 2 *dummies*
+de `international plan` e `voice mail plan`, com `area code` descartado), aplicadas a 2.499 linhas de treino.
 
 ## M.3 — Modelo baseline
 
@@ -109,51 +112,58 @@ de `international plan`, `voice mail plan` e `area code`), aplicadas a 2.499 lin
 ## M.4 — Validação cruzada
 
 Três modelos, com desbalanceamento tratado de duas formas, comparados por
-**`StratifiedKFold` (k=5)**. *Encoding*, *scaling* (logística) e *SMOTE* ficam **dentro do
+**`StratifiedKFold` (k=5)**. *Encoding*, *scaling* (logística) e *SMOTENC* ficam **dentro do
 pipeline avaliado por fold** (`imblearn.Pipeline`) — nunca antes da CV, evitando vazamento.
 
 1. **Regressão Logística** com `class_weight="balanced"` (interpretável);
 2. **Random Forest** com `class_weight="balanced"`;
-3. **Random Forest + SMOTE** (reamostragem sintética só no treino de cada fold).
+3. **Random Forest + SMOTENC** (reamostragem sintética que respeita as colunas categóricas, só no treino de cada fold).
 
 Métricas de validação cruzada (**média ± desvio**):
 
 | Modelo | Recall | F1 | ROC-AUC | PR-AUC |
 |---|---:|---:|---:|---:|
-| Regressão Logística (balanced) | **0,743 ± 0,056** | 0,483 ± 0,018 | 0,822 ± 0,019 | 0,451 ± 0,016 |
-| Random Forest (balanced) | 0,683 ± 0,077 | 0,774 ± 0,046 | **0,909 ± 0,034** | **0,836 ± 0,051** |
-| Random Forest + SMOTE | 0,738 ± 0,056 | **0,786 ± 0,030** | 0,907 ± 0,031 | 0,815 ± 0,057 |
+| Regressão Logística (balanced) | 0,752 ± 0,064 | 0,486 ± 0,019 | 0,823 ± 0,019 | 0,454 ± 0,020 |
+| Random Forest (balanced) | 0,688 ± 0,085 | 0,772 ± 0,046 | **0,916 ± 0,031** | **0,845 ± 0,046** |
+| Random Forest + SMOTENC | **0,779 ± 0,065** | **0,776 ± 0,044** | 0,907 ± 0,037 | 0,805 ± 0,057 |
 
 ## M.5 — Avaliação no teste e escolha do limiar
 
 Base desbalanceada → a acurácia não basta. O limiar **não** é fixado em 0,5: para cada modelo
 escolhemos o que **maximiza o F1**, estimado por validação cruzada no treino
-(`cross_val_predict`, evitando otimismo). Limiares escolhidos: Logística 0,60; RF balanceada
-0,39; RF + SMOTE 0,49.
+(`cross_val_predict`, evitando otimismo). Limiares escolhidos: Logística 0,59; RF balanceada
+0,35; RF + SMOTENC 0,53.
 
 Métricas no conjunto de teste *held-out* (cada modelo no seu limiar):
 
 | Modelo | Limiar | Recall | Precision | F1 | ROC-AUC | PR-AUC |
 |---|---:|---:|---:|---:|---:|---:|
-| Baseline (classe majoritária) | — | 0,00 | — | — | 0,50 | 0,14 |
-| Regressão Logística (balanced) | 0,60 | 0,59 | 0,37 | 0,46 | 0,81 | 0,42 |
-| Random Forest (balanced) | 0,39 | **0,76** | 0,75 | **0,76** | **0,90** | **0,82** |
-| Random Forest + SMOTE | 0,49 | 0,69 | **0,76** | 0,72 | 0,89 | 0,79 |
+| Baseline (classe majoritária) | — | 0,00 | — | — | 0,50 | 0,15 |
+| Regressão Logística (balanced) | 0,59 | 0,60 | 0,37 | 0,46 | 0,81 | 0,43 |
+| Random Forest (balanced) | 0,35 | **0,81** | **0,75** | **0,78** | **0,90** | **0,80** |
+| Random Forest + SMOTENC | 0,53 | 0,74 | 0,72 | 0,73 | 0,88 | 0,75 |
 
 **Leitura:**
 
-- a **Logística** tem recall alto na validação cruzada (~0,74): boa para *triagem*, mas com muitos alarmes falsos;
-- a **Random Forest balanceada** lidera no teste em ranqueamento (ROC-AUC 0,90, PR-AUC 0,82) **e** em F1 (0,76) no limiar escolhido;
-- a **Random Forest + SMOTE** fica logo atrás, com bom equilíbrio.
+- a **Logística** tem recall alto na validação cruzada (~0,75): boa para *triagem*, mas com muitos alarmes falsos;
+- a **Random Forest balanceada** lidera o teste em **todas** as métricas (recall 0,81, F1 0,78, ROC-AUC 0,90, PR-AUC 0,80) no limiar escolhido;
+- a **Random Forest + SMOTENC** fica logo atrás, com bom equilíbrio.
 
 A escolha do limiar materializa o custo de um falso negativo (perder cliente) vs. um falso
 positivo (acionar quem não cancelaria): limiares menores aumentam recall e falsos positivos.
+Como alternativa orientada ao negócio, avaliamos um limiar por **F2** (peso 2× no recall, ≈ 0,26
+via CV) para a RF balanceada: ele mantém o recall alto (0,82) reduzindo a precisão (0,68). Como
+o limiar de F1 já é baixo (0,35), ele próprio já favorece o recall — o ganho extra do F2 aqui é
+pequeno, mas o procedimento mostra como ajustar o modelo ao custo da campanha.
 
 ## M.6 — Interpretação
 
 ### Odds ratios (regressão logística, variáveis padronizadas, no treino)
 
-Pseudo R² de McFadden = **0,20**. Variáveis nomeadas em inglês, conforme o dataset.
+Pseudo R² de McFadden = **0,20**. Variáveis nomeadas em inglês, conforme o dataset. Estes *odds
+ratios* vêm de um logit interpretável de 5 variáveis padronizadas, **separado** do modelo
+preditivo de 8 *features* — servem para ler a direção e a força dos fatores, não como
+coeficientes do modelo final.
 
 | Fator | Odds ratio | p-valor | Leitura |
 |---|---:|---:|---|
@@ -163,24 +173,26 @@ Pseudo R² de McFadden = **0,20**. Variáveis nomeadas em inglês, conforme o da
 | total eve minutes | 1,40 | ≈ 2,5 × 10⁻⁷ | +40% na chance |
 | voice mail plan | 0,65 | ≈ 1,2 × 10⁻⁸ | **protetor** (reduz a chance) |
 
-### Importância de variáveis (Random Forest)
+### Importância de variáveis (Random Forest — por permutação no teste)
 
-Lideram `total day minutes`, `customer service calls` e `international plan` — **os mesmos
-fatores apontados pelos testes de hipótese**. Essa coerência entre estatística inferencial e
-modelo preditivo é a materialização da originalidade da etapa M.
+Usamos **importância por permutação** no conjunto de teste (robusta ao viés da importância por
+impureza, que infla variáveis contínuas e de alta cardinalidade). Lideram `total day minutes`,
+`customer service calls` e `international plan` — **os mesmos fatores apontados pelos testes de
+hipótese**. Essa coerência entre estatística inferencial e modelo preditivo é a materialização
+da originalidade da etapa M.
 
 ## M.7 — Conclusões da modelagem
 
 - **H1, H2 e H3 confirmadas** por testes formais no treino (p ≪ 0,05); **H4 (estado)** é sinal
   fraco — daí a decisão de **dropar** os *dummies* de `state`, tomada por validação cruzada.
 - A **seleção de variáveis é informada pelos testes** (M.1 → M.2) e **validada por CV**:
-  descartar as variáveis sem sinal e as cobranças redundantes não prejudica as métricas e
-  reduz `X` de dezenas de colunas para apenas **13**.
+  descartar as variáveis sem sinal, as cobranças redundantes e `area code` (sem sinal) não
+  prejudica as métricas e reduz `X` de dezenas de colunas para apenas **8**.
 - O **baseline** é inútil para o objetivo (recall 0): tratar o desbalanceamento é essencial.
-- Na CV e no teste *held-out*, a **Random Forest balanceada** entrega o melhor ranqueamento
-  (ROC-AUC/PR-AUC) **e** o melhor F1 no limiar escolhido; a **RF + SMOTE** fica logo atrás; a
-  **Logística** é a mais interpretável e a de maior recall. O **limiar** foi escolhido por F1
-  (via CV), não fixado em 0,5.
+- No teste *held-out*, a **Random Forest balanceada** lidera todas as métricas (recall 0,81,
+  F1 0,78, ROC-AUC 0,90, PR-AUC 0,80) no limiar escolhido; a **RF + SMOTENC** fica logo atrás; a
+  **Logística** é a mais interpretável. O **limiar** foi escolhido por F1 (via CV), não fixado em
+  0,5; um limiar por **F2** foi avaliado como alternativa pró-recall.
 - Os fatores de risco (uso diurno, contato com atendimento, plano internacional) e o fator
   protetor (voice mail) são consistentes entre testes, odds ratios e importância.
 - **Uso prático:** numa campanha de retenção, priorizar clientes com maior probabilidade

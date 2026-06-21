@@ -30,9 +30,16 @@ O projeto original deste grupo mantém a mesma base conceitual do Projeto FMF na
 - **Get:** mesmo dataset de churn da SyriaTel.
 - **Explore:** mesma investigação inicial dos dados, padrões e cuidados.
 
-A **originalidade será definida e aplicada na etapa M — Model the Data**. Como a comunicação dos resultados depende da modelagem, a etapa **C — Communicate** também será ajustada de acordo com a originalidade escolhida.
+A **originalidade foi definida e aplicada na etapa M — Model the Data** (e reflete na etapa **C — Communicate**, que depende da modelagem).
 
-Status atual da originalidade: **a definir**.
+### Originalidade do projeto (etapa M)
+
+Enquanto o Projeto FMF de referência vai direto para um classificador, a contribuição original do grupo é uma **modelagem estatisticamente fundamentada**: antes de treinar qualquer modelo, **testamos formalmente as hipóteses H1–H4** levantadas na exploração, usando para cada uma o teste adequado ao tipo de dado (qui-quadrado, Mann-Whitney, correlação ponto-bisserial), com significância **e** tamanho de efeito (Cramér's V, r ponto-bisserial). Os resultados desses testes:
+
+1. **guiam a seleção de variáveis** — só entram no modelo as variáveis com sinal estatístico; saem as redundantes (cobranças, correlação ≈ 1,0 com os minutos) e as sem sinal (`state`, `area code`);
+2. **fornecem a interpretação** do modelo final — os mesmos fatores apontados pelos testes (uso diurno, chamadas ao atendimento, plano internacional) lideram a importância da Random Forest e os *odds ratios* da regressão logística.
+
+Assim, a estatística inferencial e o modelo preditivo se reforçam, em vez de andarem separados. Todo o processo segue **rigor anti-vazamento**: o split treino/teste é feito antes de qualquer análise; os testes e a seleção usam apenas o treino; e *encoding*, *scaling* e balanceamento ficam dentro do *pipeline* avaliado por validação cruzada.
 
 ## Pergunta científica
 
@@ -64,7 +71,8 @@ PAD-2026/
 ├── docs/
 │   ├── semana1_ask.md
 │   ├── semana2_get.md
-│   └── semana3_explore.md
+│   ├── semana3_explore.md
+│   └── semana4_model.md
 ├── notebooks/
 │   └── projeto_churn_agemc.ipynb
 ├── .gitignore
@@ -80,8 +88,8 @@ PAD-2026/
 | 1 | Ask | `docs/semana1_ask.md` | Concluído |
 | 2 | Get | `docs/semana2_get.md` | Concluído |
 | 3 | Explore | `docs/semana3_explore.md` | Concluído |
-| Projeto completo | AGEMC parcial | `notebooks/projeto_churn_agemc.ipynb` | Em desenvolvimento |
-| Próxima etapa | Model | a definir | Pendente |
+| 4 | Model | `docs/semana4_model.md` | Concluído |
+| Projeto completo | AGEMC (A–M) | `notebooks/projeto_churn_agemc.ipynb` | Etapas A–M concluídas |
 | Resultado final | Communicate | a definir | Pendente |
 
 ## Principais achados da exploração
@@ -96,7 +104,19 @@ A análise exploratória inicial indicou que:
 - colunas de cobrança são quase perfeitamente correlacionadas com as colunas de minutos e podem ser redundantes na modelagem;
 - `phone number` é identificador e deve ser removido antes da modelagem.
 
-Esses pontos preparam a etapa de modelagem, onde será inserida a originalidade do projeto.
+Esses pontos prepararam a etapa de modelagem, onde foi inserida a originalidade do projeto.
+
+## Resultados da modelagem
+
+A etapa **M** confirmou e quantificou os achados da exploração e produziu o modelo preditivo:
+
+- **Hipóteses testadas no treino:** H1 (chamadas ao atendimento ≥ 4), H2 (minutos diurnos) e H3 (plano internacional) são **fortemente significativas** (p ≪ 0,05); o maior efeito é o das chamadas ao atendimento (Cramér's V ≈ 0,33), seguido do plano internacional (≈ 0,26). **H4 (estado)** tem sinal **fraco** e foi descartado por validação cruzada; o plano de *voice mail* aparece como fator **protetor**.
+- **Seleção enxuta:** a matriz de entrada caiu de dezenas de colunas para **8 *features*** (6 numéricas com sinal + 2 categóricas), sem perda de desempenho.
+- **Modelo escolhido:** a **Random Forest balanceada** lidera o conjunto de teste em todas as métricas — recall **0,81**, F1 **0,78**, ROC-AUC **0,90**, PR-AUC **0,80** — com o limiar de decisão escolhido por F1 via validação cruzada (não fixado em 0,5).
+- **Baseline** (prever sempre "não churn") tem acurácia 0,855 mas **recall 0** — inútil para retenção, o que confirma a necessidade de tratar o desbalanceamento.
+- **Interpretação:** uso diurno, contato com atendimento e plano internacional elevam o churn; *voice mail* reduz. O resultado é coerente entre testes de hipótese, *odds ratios* e importância por permutação.
+
+Detalhes completos em [`docs/semana4_model.md`](docs/semana4_model.md) e no notebook.
 
 ## Como rodar o projeto
 
@@ -150,7 +170,7 @@ A pasta `src/` poderá ser criada futuramente se o projeto passar a ter código 
 
 ## Próximos passos
 
-1. Definir a originalidade da etapa **M — Model the Data**.
-2. Implementar a modelagem no notebook.
-3. Comparar resultados com a abordagem de referência do Projeto FMF.
-4. Construir a etapa **C — Communicate**, destacando o processo de desenvolvimento e a contribuição original.
+1. ✔ Originalidade da etapa **M** definida (modelagem estatisticamente fundamentada) e aplicada no notebook.
+2. Construir a etapa **C — Communicate**, com visualizações e narrativa dos resultados para um público não técnico.
+3. Aprofundar a comparação dos resultados com a abordagem de referência do Projeto FMF.
+4. (Opcional) Avaliar um limiar orientado a custo (F2 já esboçado) e calibração de probabilidades para uso em uma campanha de retenção.

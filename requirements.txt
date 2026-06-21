@@ -4,5 +4,6 @@ seaborn
 scipy
 scikit-learn
 imbalanced-learn
+statsmodels
 jupyter
 ipykernel
