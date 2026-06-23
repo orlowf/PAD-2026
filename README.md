@@ -89,8 +89,8 @@ PAD-2026/
 | 2 | Get | `docs/semana2_get.md` | Concluído |
 | 3 | Explore | `docs/semana3_explore.md` | Concluído |
 | 4 | Model | `docs/semana4_model.md` | Concluído |
-| Projeto completo | AGEMC (A–M) | `notebooks/projeto_churn_agemc.ipynb` | Etapas A–M concluídas |
-| Resultado final | Communicate | a definir | Pendente |
+| Projeto completo | AGEMC (A–C) | `notebooks/projeto_churn_agemc.ipynb` | Concluído |
+| Semana 5 | Communicate | `docs/semana5_communicate.md` + seção C do notebook | Concluído |
 
 ## Principais achados da exploração
 
@@ -171,6 +171,5 @@ A pasta `src/` poderá ser criada futuramente se o projeto passar a ter código 
 ## Próximos passos
 
 1. ✔ Originalidade da etapa **M** definida (modelagem estatisticamente fundamentada) e aplicada no notebook.
-2. Construir a etapa **C — Communicate**, com visualizações e narrativa dos resultados para um público não técnico.
-3. Aprofundar a comparação dos resultados com a abordagem de referência do Projeto FMF.
-4. (Opcional) Avaliar um limiar orientado a custo (F2 já esboçado) e calibração de probabilidades para uso em uma campanha de retenção.
+2. ✔ Etapa **C — Communicate** concluída: `docs/semana5_communicate.md` e seção C do notebook com narrativa acessível, painel de fatores (C.2), desempenho dos modelos (C.3), curva de ganho para uso prático (C.4) e comparação com o Projeto FMF (C.5).
+3. ✔ Comparação metodológica com o Projeto FMF documentada em `docs/semana5_communicate.md` e na célula C.5 do notebook.
